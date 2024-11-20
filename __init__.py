@@ -1,15 +1,14 @@
 from flask import Flask, render_template_string, render_template, jsonify
-from flask import render_template
 from flask import json
 from datetime import datetime
 from urllib.request import urlopen
-import sqlite3
-                                                                                                                                       
-app = Flask(__name__)                                                                                                                  
+import requests
+
+app = Flask(__name__)
 
 @app.route('/')
 def hello_world():
-    return render_template('hello.html') #Commentaire
+    return render_template('hello.html') # Commentaire
 
 @app.route("/contact/")
 def contact():
@@ -34,6 +33,27 @@ def mongraphique():
 @app.route("/histogramme/")
 def histogramme():
     return render_template("histogramme.html")
+
+@app.route("/commits/")
+def commits_graph():
+    # Récupération des données depuis l'API GitHub
+    repo_url = "https://api.github.com/repos/OpenRSI/5MCSI_Metriques/commits"
+    response = requests.get(repo_url)
+    commits = response.json()
+
+    # Analyse des données pour extraire les minutes
+    commit_minutes = {}
+    for commit in commits:
+        date_str = commit["commit"]["author"]["date"]
+        date_obj = datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%SZ')
+        minute = date_obj.minute
+        commit_minutes[minute] = commit_minutes.get(minute, 0) + 1
+
+    # Préparer les données pour le graphique
+    data = [{"minute": minute, "count": count} for minute, count in commit_minutes.items()]
+
+    # Passer les données au template HTML
+    return render_template("commits.html", data=data)
 
 if __name__ == "__main__":
   app.run(debug=True)
