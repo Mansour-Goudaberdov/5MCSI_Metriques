@@ -35,32 +35,5 @@ def mongraphique():
 def histogramme():
     return render_template("histogramme.html")
 
-@app.route("/commits/")
-def commits_graph():
-    import requests  # Assurez-vous que la bibliothèque requests est installée.
-    
-    # URL de l'API GitHub pour les commits
-    repo_url = "https://api.github.com/repos/OpenRSI/5MCSI_Metriques/commits"
-    response = requests.get(repo_url)
-    
-    # Vérification du statut de la réponse
-    if response.status_code != 200:
-        return jsonify({"error": "Impossible de récupérer les données des commits"}), 500
-    
-    commits = response.json()
-    commit_minutes = {}
-
-    # Extraction des minutes des dates de commit
-    for commit in commits:
-        date_str = commit["commit"]["author"]["date"]
-        date_obj = datetime.strptime(date_str, '%Y-%m-%dT%H:%M:%SZ')
-        minute = date_obj.minute
-        commit_minutes[minute] = commit_minutes.get(minute, 0) + 1
-
-    # Préparer les données pour le graphique
-    data = [{"minute": minute, "count": count} for minute, count in sorted(commit_minutes.items())]
-
-    return render_template("commits.html", data=data)
-
 if __name__ == "__main__":
   app.run(debug=True)
